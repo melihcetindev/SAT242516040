@@ -1,0 +1,342 @@
+﻿@page "/yayinlar"
+@using DbContexts
+@using SAT242516040.Models
+@inject MyDbModel_DbContext _context
+@using Microsoft.EntityFrameworkCore
+@rendermode InteractiveServer
+
+<div class="container-fluid">
+    <div class="row">
+        <!-- YAZARLAR BÖLÜMÜ -->
+        <div class="col-md-4">
+            <h3>Yazarlar</h3>
+            <hr />
+
+            <h5>Yeni Yazar</h5>
+            <div class="mb-2">
+                <label>Ad:</label>
+                <input class="form-control" @bind="yeniYazar.Ad" />
+            </div>
+            <div class="mb-2">
+                <label>Soyad:</label>
+                <input class="form-control" @bind="yeniYazar.Soyad" />
+            </div>
+            <button class="btn btn-primary btn-sm mt-2" @onclick="EkleYazar">Ekle</button>
+
+            <hr />
+
+            <h5>Yazar Listesi</h5>
+            <table class="table table-sm table-bordered">
+                <thead>
+                    <tr>
+                        <th>Id</th>
+                        <th>Ad Soyad</th>
+                        <th>İşlem</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var yazar in yazarlar)
+                    {
+                        <tr>
+                            <td>@yazar.Id</td>
+                            <td>
+                                @if (editYazar?.Id == yazar.Id)
+                                {
+                                    <input class="form-control form-control-sm mb-1" @bind="editYazar.Ad" placeholder="Ad" />
+                                    <input class="form-control form-control-sm" @bind="editYazar.Soyad" placeholder="Soyad" />
+                                }
+                                else
+                                {
+                                    <span>@yazar.Ad @yazar.Soyad</span>
+                                }
+                            </td>
+                            <td>
+                                @if (editYazar?.Id == yazar.Id)
+                                {
+                                    <button class="btn btn-success btn-sm" @onclick="KaydetYazar">Kaydet</button>
+                                    <button class="btn btn-secondary btn-sm" @onclick="IptalYazar">İptal</button>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-warning btn-sm" @onclick="() => DuzenleYazar(yazar)">Düzenle</button>
+                                    <button class="btn btn-danger btn-sm" @onclick="() => SilYazar(yazar.Id)">Sil</button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- YAYINLAR BÖLÜMÜ -->
+        <div class="col-md-8">
+            <h3>Yayınlar</h3>
+            <hr />
+
+            <h5>Yeni Yayın</h5>
+            <div class="row">
+                <div class="col-md-6 mb-2">
+                    <label>Başlık:</label>
+                    <input class="form-control" @bind="yeniYayin.Baslik" />
+                </div>
+                <div class="col-md-3 mb-2">
+                    <label>Yayın Tarihi:</label>
+                    <input type="date" class="form-control" @bind="yeniYayin.YayinTarihi" />
+                </div>
+                <div class="col-md-3 mb-2">
+                    <label>Dergi:</label>
+                    <input class="form-control" @bind="yeniYayin.Dergi" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-2">
+                    <label>Yazar:</label>
+                    <select class="form-control" @bind="seciliYazarId">
+                        <option value="0">Seçiniz</option>
+                        @foreach (var yazar in yazarlar)
+                        {
+                            <option value="@yazar.Id">@yazar.Ad @yazar.Soyad</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-6 mb-2 d-flex align-items-end">
+                    <button class="btn btn-primary" @onclick="EkleYayin">Ekle</button>
+                </div>
+            </div>
+
+            <hr />
+
+            <h5>Yayın Listesi</h5>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Id</th>
+                        <th>Başlık</th>
+                        <th>Tarih</th>
+                        <th>Dergi</th>
+                        <th>Yazar</th>
+                        <th>İşlem</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var y in yayinlar)
+                    {
+                        <tr>
+                            <td>@y.Id</td>
+                            <td>
+                                @if (editYayin?.Id == y.Id)
+                                {
+                                    <input class="form-control form-control-sm" @bind="editYayin.Baslik" />
+                                }
+                                else
+                                {
+                                    <span>@y.Baslik</span>
+                                }
+                            </td>
+                            <td>
+                                @if (editYayin?.Id == y.Id)
+                                {
+                                    <input type="date" class="form-control form-control-sm" @bind="editYayin.YayinTarihi" />
+                                }
+                                else
+                                {
+                                    <span>@(y.YayinTarihi?.ToShortDateString())</span>
+                                }
+                            </td>
+                            <td>
+                                @if (editYayin?.Id == y.Id)
+                                {
+                                    <input class="form-control form-control-sm" @bind="editYayin.Dergi" />
+                                }
+                                else
+                                {
+                                    <span>@y.Dergi</span>
+                                }
+                            </td>
+                            <td>
+                                @if (editYayin?.Id == y.Id)
+                                {
+                                    <select class="form-control form-control-sm" @bind="editSeciliYazarId">
+                                        <option value="0">Seçiniz</option>
+                                        @foreach (var yazar in yazarlar)
+                                        {
+                                            <option value="@yazar.Id">@yazar.Ad @yazar.Soyad</option>
+                                        }
+                                    </select>
+                                }
+                                else
+                                {
+                                    <span>@y.Yazar?.Ad @y.Yazar?.Soyad</span>
+                                }
+                            </td>
+                            <td>
+                                @if (editYayin?.Id == y.Id)
+                                {
+                                    <button class="btn btn-success btn-sm" @onclick="KaydetYayin">Kaydet</button>
+                                    <button class="btn btn-secondary btn-sm" @onclick="IptalYayin">İptal</button>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-warning btn-sm" @onclick="() => DuzenleYayin(y)">Düzenle</button>
+                                    <button class="btn btn-danger btn-sm" @onclick="() => SilYayin(y.Id)">Sil</button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<Yayin> yayinlar = new();
+    private Yayin yeniYayin = new Yayin();
+    private Yayin? editYayin;
+    private int seciliYazarId = 0;
+    private int editSeciliYazarId = 0;
+
+    private List<Yazar> yazarlar = new();
+    private Yazar yeniYazar = new Yazar();
+    private Yazar? editYazar;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Yukle();
+    }
+
+    private async Task Yukle()
+    {
+        yazarlar = await _context.Yazarlar.ToListAsync();
+        yayinlar = await _context.Yayinlar.Include(y => y.Yazar).ToListAsync();
+    }
+
+    private async Task EkleYazar()
+    {
+        if (string.IsNullOrWhiteSpace(yeniYazar.Ad))
+        {
+            return;
+        }
+
+        _context.Yazarlar.Add(yeniYazar);
+        await _context.SaveChangesAsync();
+
+        yeniYazar = new Yazar();
+        await Yukle();
+    }
+
+    private void DuzenleYazar(Yazar yazar)
+    {
+        editYazar = new Yazar
+        {
+            Id = yazar.Id,
+            Ad = yazar.Ad,
+            Soyad = yazar.Soyad
+        };
+    }
+
+    private async Task KaydetYazar()
+    {
+        if (editYazar == null) return;
+
+        var yazar = await _context.Yazarlar.FindAsync(editYazar.Id);
+        if (yazar != null)
+        {
+            yazar.Ad = editYazar.Ad;
+            yazar.Soyad = editYazar.Soyad;
+
+            await _context.SaveChangesAsync();
+            editYazar = null;
+            await Yukle();
+        }
+    }
+
+    private void IptalYazar()
+    {
+        editYazar = null;
+    }
+
+    private async Task SilYazar(int id)
+    {
+        var yazar = await _context.Yazarlar.FindAsync(id);
+        if (yazar != null)
+        {
+            _context.Yazarlar.Remove(yazar);
+            await _context.SaveChangesAsync();
+            await Yukle();
+        }
+    }
+
+    private async Task EkleYayin()
+    {
+        if (string.IsNullOrWhiteSpace(yeniYayin.Baslik))
+        {
+            return;
+        }
+
+        if (seciliYazarId > 0)
+        {
+            yeniYayin.YazarId = seciliYazarId;
+        }
+
+        _context.Yayinlar.Add(yeniYayin);
+        await _context.SaveChangesAsync();
+
+        yeniYayin = new Yayin();
+        seciliYazarId = 0;
+        await Yukle();
+    }
+
+    private void DuzenleYayin(Yayin y)
+    {
+        editYayin = new Yayin
+        {
+            Id = y.Id,
+            Baslik = y.Baslik,
+            YayinTarihi = y.YayinTarihi,
+            Dergi = y.Dergi,
+            YazarId = y.YazarId
+        };
+        editSeciliYazarId = y.YazarId;
+    }
+
+    private async Task KaydetYayin()
+    {
+        if (editYayin == null) return;
+
+        var y = await _context.Yayinlar.FindAsync(editYayin.Id);
+        if (y != null)
+        {
+            y.Baslik = editYayin.Baslik;
+            y.YayinTarihi = editYayin.YayinTarihi;
+            y.Dergi = editYayin.Dergi;
+
+            if (editSeciliYazarId > 0)
+            {
+                y.YazarId = editSeciliYazarId;
+            }
+
+            await _context.SaveChangesAsync();
+            editYayin = null;
+            editSeciliYazarId = 0;
+            await Yukle();
+        }
+    }
+
+    private void IptalYayin()
+    {
+        editYayin = null;
+        editSeciliYazarId = 0;
+    }
+
+    private async Task SilYayin(int id)
+    {
+        var y = await _context.Yayinlar.FindAsync(id);
+        if (y != null)
+        {
+            _context.Yayinlar.Remove(y);
+            await _context.SaveChangesAsync();
+            await Yukle();
+        }
+    }
+}
